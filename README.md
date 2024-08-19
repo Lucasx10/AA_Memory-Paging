@@ -35,31 +35,27 @@ O código pode ser dividido em várias etapas principais:
 
 1. Abertura do Arquivo bible.txt
 
-    O arquivo é aberto para leitura usando a função open. O descritor de arquivo (fd) é utilizado para operações subsequentes.
+O arquivo é aberto para leitura e escrita usando a função open com a flag O_RDWR. O descritor de arquivo (fd) é utilizado para operações subsequentes.
 
 2. Obtenção do Tamanho do Arquivo
 
-    A função fstat é utilizada para obter informações sobre o arquivo, incluindo seu tamanho (st.st_size).
+A função fstat é utilizada para obter informações sobre o arquivo, incluindo seu tamanho (st.st_size).
 
-3. Obtenção do Tamanho da Página de Memória
+3. Mapeamento do Arquivo na Memória
 
-    O tamanho da página de memória do sistema é obtido através da função sysconf(_SC_PAGE_SIZE).
+A função mmap é usada para mapear o arquivo na memória virtual. O arquivo é mapeado com permissões de leitura e escrita (PROT_READ | PROT_WRITE) e a flag MAP_SHARED, permitindo que modificações na memória sejam refletidas no arquivo original.
 
-4. Alocação de Memória Virtual
+4. (Opcional) Escrita de Dados na Memória Mapeada
 
-    A função mmap é utilizada para alocar uma região de memória virtual que pode conter todo o conteúdo do arquivo.
+Há um trecho comentado no código que permite escrever uma string no início da memória mapeada, que será refletida diretamente no arquivo original devido ao uso de MAP_SHARED.
 
-5. Leitura do Arquivo para a Memória
+5. Impressão do Conteúdo da Memória
 
-    O conteúdo do arquivo bible.txt é lido e copiado diretamente para a memória virtual alocada.
+O código imprime o endereço da memória virtual e os primeiros 1000 caracteres do conteúdo do arquivo que foi carregado na memória.
 
-6. Impressão do Conteúdo da Memória
+6. Desmapear a Memória e Fechar o Arquivo
 
-    O código imprime o endereço da memória virtual e os primeiros 1000 caracteres do conteúdo do arquivo que foi carregado.
-
-7. Liberação da Memória e Fechamento do Arquivo
-
-    Após o uso, a memória alocada é liberada com munmap e o arquivo é fechado com close.
+Após o uso, a memória mapeada é desfeita com munmap e o arquivo é fechado com close.
 
 ### Conclusão
 
