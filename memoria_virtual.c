@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -8,7 +7,7 @@
 
 int main() {
     // Abrir o arquivo bible.txt
-    int fd = open("bible.txt", O_RDONLY);
+    int fd = open("bible.txt", O_RDWR);
     if (fd == -1) {
         perror("Erro ao abrir o arquivo bible.txt");
         exit(EXIT_FAILURE);
@@ -23,33 +22,26 @@ int main() {
     }
     size_t file_size = st.st_size;
 
-    // Obter o tamanho da página de memória
-    size_t page_size = sysconf(_SC_PAGE_SIZE);
-
-    // Alocar páginas de memória suficientes para o conteúdo do arquivo
-    size_t num_pages = (file_size + page_size - 1) / page_size; // arredondar para cima
-    char *memory = mmap(NULL, num_pages * page_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    // Mapear o arquivo na memória
+    char *memory = mmap(NULL, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (memory == MAP_FAILED) {
-        perror("Erro ao alocar memória");
+        perror("Erro ao mapear o arquivo na memória");
         close(fd);
         exit(EXIT_FAILURE);
     }
 
-    // Ler o conteúdo do arquivo e escrever na memória alocada
-    ssize_t bytes_read = read(fd, memory, file_size);
-    if (bytes_read == -1) {
-        perror("Erro ao ler o arquivo");
-        munmap(memory, num_pages * page_size);
-        close(fd);
-        exit(EXIT_FAILURE);
-    }
+    // Exemplo: caso queira Escrever uma string no início da memória mapeada
+    //const char *new_content = "Texto novo inserido na memória mapeada.\n";
+    //memcpy(memory, new_content, strlen(new_content));
 
-    // Imprimir o endereço de memória e o conteúdo (primeiros 1000 caracteres para evitar muito texto)
+    // Imprimir o endereço de memória e o conteúdo (primeiros 1000 caracteres)
     printf("Endereço de memória virtual: %p\n", (void*)memory);
     printf("Conteúdo na memória (primeiros 1000 caracteres):\n%.1000s\n", memory);
 
-    // Limpar
-    munmap(memory, num_pages * page_size);
+    // Desmapear a memória e fechar o arquivo
+    if (munmap(memory, file_size) == -1) {
+        perror("Erro ao desmapear a memória");
+    }
     close(fd);
 
     return 0;
